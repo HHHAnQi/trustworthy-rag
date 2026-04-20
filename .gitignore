@@ -1,0 +1,38 @@
+# 模型文件
+models/
+
+# 原始数据
+raw_data/
+
+# 大数据文件（可本地重建）
+data/faiss.index
+data/docs.txt
+data/qa_history.db
+data/*.pkl
+data/calibration.json
+
+# 环境变量（含密钥）
+configs/.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# 日志
+logs/
+
+# 系统文件
+.DS_Store
+.idea/
+
+# 启动文档
+完整启动流程.md
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# 备份
+data/backup/

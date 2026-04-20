@@ -1,0 +1,35 @@
+# configs/config.yaml
+# 所有路径使用绝对路径，避免 cwd 问题
+
+# ── LLM ──────────────────────────────────────────────────────────────────────
+llm:
+  name: "/root/autodl-tmp/trustworthy-rag/models/Qwen2.5-7B-Instruct"
+  max_new_tokens: 128       # TriviaQA 答案很短，128 够用，比 256 快一倍
+  temperature: 0.7
+  num_samples: 5            # K=5，每个 query 独立采样 5 次
+
+# ── RAG ──────────────────────────────────────────────────────────────────────
+rag:
+  index_path: "/root/autodl-tmp/trustworthy-rag/data/faiss.index"
+  docs_path:  "/root/autodl-tmp/trustworthy-rag/data/docs.txt"
+  embedder:   "/root/autodl-tmp/trustworthy-rag/models/bge-small-en-v1.5"
+  top_k: 3
+
+# ── Uncertainty ───────────────────────────────────────────────────────────────
+uncertainty:
+  embedder: "/root/autodl-tmp/trustworthy-rag/models/bge-small-en-v1.5"
+  weights:
+    consistency: 0.5        # w1：答案一致性权重
+    retrieval:   0.5        # w2：检索支持度权重
+
+# ── Conformal Prediction ─────────────────────────────────────────────────────
+conformal:
+  qhat_path:     "/root/autodl-tmp/trustworthy-rag/data/qhat.json"
+  default_alpha: 0.1        # 默认风险等级：10% 错误率上限
+
+# ── Logging ───────────────────────────────────────────────────────────────────
+logging:
+  level: "INFO"
+# ── Faithfulness Checker ──────────────────────────────────────────────────────
+faithfulness:
+  model_path: "/root/autodl-tmp/trustworthy-rag/models/nli-deberta-v3-small"

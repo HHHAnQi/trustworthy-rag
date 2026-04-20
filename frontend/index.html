@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trustworthy RAG QA</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:'Geist',sans-serif;
+  background:#f5f2ee;
+  color:#1a1a1a;
+  display:grid;
+  grid-template-columns:280px 1fr;
+  grid-template-rows:100vh;
+}
+
+/* ── LEFT SIDEBAR ── */
+.sidebar{
+  background:#1c1917;
+  color:#e8e3dc;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  border-right:1px solid #2e2a26;
+}
+.sidebar-logo{
+  padding:24px 20px 20px;
+  border-bottom:1px solid #2e2a26;
+}
+.logo-top{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:6px;
+}
+.logo-badge{
+  background:#c8f542;
+  color:#1a2a00;
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  font-weight:500;
+  padding:3px 8px;
+  border-radius:4px;
+  letter-spacing:.06em;
+}
+.logo-title{
+  font-size:15px;
+  font-weight:500;
+  color:#f5f0e8;
+}
+.logo-sub{
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  color:#6b6560;
+  letter-spacing:.04em;
+}
+
+.sidebar-section{
+  padding:18px 20px;
+  border-bottom:1px solid #2e2a26;
+}
+.sidebar-label{
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  color:#6b6560;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  margin-bottom:12px;
+}
+
+/* Alpha chips */
+.alpha-chips{display:flex;gap:6px;margin-bottom:8px}
+.chip{
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  padding:5px 12px;
+  border-radius:6px;
+  border:1px solid #3a3530;
+  background:transparent;
+  color:#8a847d;
+  cursor:pointer;
+  transition:all .15s;
+}
+.chip:hover{border-color:#c8f542;color:#c8f542}
+.chip.active{background:#c8f542;border-color:#c8f542;color:#1a2a00}
+.alpha-hint{font-size:11px;color:#6b6560;line-height:1.4}
+
+/* API input */
+.api-label{font-size:11px;color:#6b6560;margin-bottom:6px}
+.api-input{
+  width:100%;
+  background:#141210;
+  border:1px solid #3a3530;
+  border-radius:6px;
+  color:#a8a09a;
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  padding:7px 10px;
+  outline:none;
+  transition:border-color .15s;
+}
+.api-input:focus{border-color:#c8f542}
+
+/* Session */
+.session-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-top:10px;
+}
+.session-txt{font-family:'DM Mono',monospace;font-size:10px;color:#6b6560}
+.clear-btn{
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  color:#7a4a3a;
+  background:none;
+  border:none;
+  cursor:pointer;
+  transition:color .15s;
+}
+.clear-btn:hover{color:#e07050}
+
+/* History */
+.history-label{
+  padding:14px 20px 8px;
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  color:#6b6560;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+.history-list{
+  flex:1;
+  overflow-y:auto;
+  padding:0 12px 12px;
+}
+.history-list::-webkit-scrollbar{width:3px}
+.history-list::-webkit-scrollbar-thumb{background:#3a3530;border-radius:2px}
+.hist-item{
+  padding:10px 10px;
+  border-radius:8px;
+  cursor:pointer;
+  transition:background .15s;
+  margin-bottom:4px;
+}
+.hist-item:hover{background:#2a2520}
+.hist-item.active{background:#252018;border:1px solid #c8f54228}
+.hist-q{font-size:12px;font-weight:500;color:#c8c0b8;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist-meta{display:flex;gap:8px;font-family:'DM Mono',monospace;font-size:10px}
+.hist-reliable{color:#86c842}
+.hist-abstained{color:#e07050}
+.hist-conf{color:#6b6560}
+.hist-source-kb{color:#5b9fd4}
+.hist-source-ext{color:#c8a040}
+.hist-source-none{color:#6b6560}
+.empty-hist{
+  padding:32px 10px;
+  text-align:center;
+  font-size:12px;
+  color:#4a4540;
+  line-height:1.7;
+}
+
+/* ── MAIN AREA ── */
+.main{
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  background:#f5f2ee;
+}
+
+/* Chat area */
+.chat-area{
+  flex:1;
+  overflow-y:auto;
+  padding:40px 48px;
+}
+.chat-area::-webkit-scrollbar{width:4px}
+.chat-area::-webkit-scrollbar-thumb{background:#d8d0c8;border-radius:2px}
+
+/* Welcome */
+.welcome{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-height:60vh;
+  text-align:center;
+}
+.welcome-title{
+  font-family:'Instrument Serif',serif;
+  font-size:clamp(32px,5vw,52px);
+  font-weight:400;
+  color:#1a1a1a;
+  line-height:1.15;
+  margin-bottom:16px;
+  letter-spacing:-.01em;
+}
+.welcome-title em{
+  font-style:italic;
+  color:#5a7a3a;
+}
+.welcome-sub{
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  color:#8a8078;
+  letter-spacing:.06em;
+  max-width:480px;
+  line-height:1.8;
+}
+
+/* Turn card */
+.turn{
+  max-width:760px;
+  margin:0 auto 48px;
+  animation:turnIn .3s ease;
+}
+@keyframes turnIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+.turn-meta{
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  color:#a8a098;
+  margin-bottom:14px;
+  letter-spacing:.05em;
+}
+
+/* Question bubble */
+.q-bubble{
+  background:#1c1917;
+  color:#e8e3dc;
+  border-radius:16px 16px 4px 16px;
+  padding:14px 18px;
+  font-size:15px;
+  font-weight:400;
+  line-height:1.5;
+  display:inline-block;
+  max-width:90%;
+  margin-bottom:20px;
+}
+
+/* Answer block — THE HERO */
+.answer-block{
+  background:#ffffff;
+  border:1.5px solid #e8e0d8;
+  border-radius:16px;
+  overflow:hidden;
+  margin-bottom:16px;
+}
+.answer-status-bar{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 20px;
+  border-bottom:1px solid #f0ece6;
+}
+.answer-status-bar.reliable{background:#f0f8e8}
+.answer-status-bar.abstained{background:#fdf0ec}
+.answer-status-bar.extended{background:#fdf8ec}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.reliable .status-dot{background:#5a9a2a}
+.abstained .status-dot{background:#d05030}
+.extended .status-dot{background:#c09020}
+.status-label{font-family:'DM Mono',monospace;font-size:11px;font-weight:500}
+.reliable .status-label{color:#3a6a1a}
+.abstained .status-label{color:#c04020}
+.extended .status-label{color:#906010}
+.status-detail{font-family:'DM Mono',monospace;font-size:10px;color:#a09888;margin-left:auto}
+.latency{font-family:'DM Mono',monospace;font-size:10px;color:#c8c0b4;margin-left:8px}
+
+/* THE ANSWER TEXT — big and prominent */
+.answer-text-wrap{padding:24px 24px 20px}
+.answer-text{
+  font-family:'Instrument Serif',serif;
+  font-size:26px;
+  font-weight:400;
+  color:#1a1a1a;
+  line-height:1.4;
+  letter-spacing:-.01em;
+}
+.answer-text.abstained-msg{
+  font-family:'Geist',sans-serif;
+  font-size:15px;
+  color:#c04020;
+  font-style:normal;
+}
+
+/* Source badge */
+.source-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  padding:3px 10px;
+  border-radius:20px;
+  margin-top:10px;
+}
+.source-kb{background:#e8f4fe;color:#1a5a9a;border:1px solid #b8d8f4}
+.source-ext{background:#fef8e8;color:#8a5a10;border:1px solid #f0d890}
+.source-none{background:#f0ece8;color:#8a8078;border:1px solid #d8d0c8}
+
+/* Metrics row */
+.metrics-row{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:0;
+  border-top:1px solid #f0ece6;
+}
+.metric{
+  padding:14px 20px;
+  border-right:1px solid #f0ece6;
+}
+.metric:last-child{border-right:none}
+.metric-name{
+  font-family:'DM Mono',monospace;
+  font-size:9px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:#b0a898;
+  margin-bottom:6px;
+}
+.metric-val{
+  font-family:'DM Mono',monospace;
+  font-size:20px;
+  font-weight:500;
+  line-height:1;
+}
+.metric-bar{height:3px;background:#f0ece6;border-radius:2px;margin-top:8px;overflow:hidden}
+.metric-fill{height:100%;border-radius:2px;transition:width .7s cubic-bezier(.16,1,.3,1)}
+
+/* Score viz */
+.score-viz{
+  border-top:1px solid #f0ece6;
+  padding:12px 20px 14px;
+}
+.score-viz-track{
+  position:relative;
+  height:20px;
+  background:#f5f2ee;
+  border-radius:4px;
+  overflow:hidden;
+  border:1px solid #e8e0d8;
+}
+.score-fill{
+  position:absolute;
+  height:100%;
+  background:#fad878;
+  border-right:2px solid #c09020;
+  transition:width .7s cubic-bezier(.16,1,.3,1);
+}
+.thresh-line{
+  position:absolute;
+  height:100%;
+  border-left:2px dashed #5a9a2a;
+  transition:left .7s cubic-bezier(.16,1,.3,1);
+}
+.score-viz-label{
+  display:flex;
+  justify-content:space-between;
+  margin-top:5px;
+  font-family:'DM Mono',monospace;
+  font-size:9px;
+  color:#b0a898;
+}
+
+/* Breakdown toggle */
+.bd-section{border-top:1px solid #f0ece6}
+.bd-toggle{
+  width:100%;
+  padding:10px 20px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  background:none;
+  border:none;
+  cursor:pointer;
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  color:#a09888;
+  text-align:left;
+  transition:color .15s;
+}
+.bd-toggle:hover{color:#5a9a2a}
+.bd-arrow{transition:transform .2s;display:inline-block}
+.bd-toggle.open .bd-arrow{transform:rotate(90deg)}
+.bd-panel{
+  display:none;
+  padding:0 20px 14px;
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+}
+.bd-panel.open{display:block}
+.bd-row{
+  display:flex;
+  justify-content:space-between;
+  padding:5px 0;
+  border-bottom:1px solid #f5f2ee;
+  color:#8a8078;
+}
+.bd-row:last-child{border-bottom:none}
+.bd-val{color:#3a3530;font-weight:500}
+
+/* Docs */
+.docs-block{
+  background:#ffffff;
+  border:1px solid #e8e0d8;
+  border-radius:12px;
+  overflow:hidden;
+}
+.docs-header{
+  padding:10px 16px;
+  background:#f8f5f0;
+  border-bottom:1px solid #e8e0d8;
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  color:#8a8078;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.doc-item{
+  padding:10px 16px;
+  border-bottom:1px solid #f5f2ee;
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  color:#6a6058;
+  line-height:1.6;
+  display:flex;
+  gap:10px;
+}
+.doc-item:last-child{border-bottom:none}
+.doc-num{
+  font-size:9px;
+  color:#c0b8b0;
+  flex-shrink:0;
+  margin-top:1px;
+}
+
+/* Search note */
+.search-note{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 16px;
+  background:#fef8e8;
+  border:1px solid #f0d890;
+  border-radius:8px;
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  color:#8a5a10;
+  margin-bottom:12px;
+}
+
+/* ── INPUT ── */
+.input-wrap{
+  padding:16px 48px 24px;
+  border-top:1px solid #e8e0d8;
+  background:#f5f2ee;
+}
+.input-row{display:flex;gap:10px;align-items:flex-end}
+textarea{
+  flex:1;
+  background:#ffffff;
+  border:1.5px solid #d8d0c8;
+  border-radius:12px;
+  color:#1a1a1a;
+  font-family:'Geist',sans-serif;
+  font-size:14px;
+  font-weight:400;
+  line-height:1.5;
+  padding:12px 16px;
+  resize:none;
+  min-height:50px;
+  max-height:120px;
+  outline:none;
+  transition:border-color .2s,box-shadow .2s;
+  max-width:660px;
+}
+textarea::placeholder{color:#b0a898}
+textarea:focus{border-color:#5a7a3a;box-shadow:0 0 0 3px #5a7a3a18}
+.send-btn{
+  background:#1c1917;
+  color:#f5f2ee;
+  border:none;
+  border-radius:12px;
+  padding:0 22px;
+  height:50px;
+  font-family:'Geist',sans-serif;
+  font-size:13px;
+  font-weight:500;
+  cursor:pointer;
+  white-space:nowrap;
+  transition:background .15s,transform .1s;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.send-btn:hover:not(:disabled){background:#2e2a26}
+.send-btn:active:not(:disabled){transform:scale(.97)}
+.send-btn:disabled{opacity:.45;cursor:not-allowed}
+.input-hint{
+  margin-top:8px;
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  color:#b0a898;
+  display:flex;
+  justify-content:space-between;
+}
+.spinner{
+  display:none;
+  width:14px;height:14px;
+  border:2px solid #f5f2ee;
+  border-top-color:transparent;
+  border-radius:50%;
+  animation:spin .6s linear infinite;
+}
+.spinner.on{display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.err-msg{
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  color:#c04020;
+  margin-top:8px;
+  display:none;
+}
+.err-msg.on{display:block}
+.admin-toggle{
+  width:100%;padding:10px 0;
+  background:none;border:1px solid #3a3530;border-radius:8px;
+  color:#8a847d;font-family:'DM Mono',monospace;font-size:11px;
+  cursor:pointer;transition:all .15s;
+}
+.admin-toggle:hover{border-color:#c8f542;color:#c8f542}
+.admin-overlay{
+  display:none;position:fixed;inset:0;
+  background:#00000060;z-index:100;
+}
+.admin-overlay.on{display:block}
+.admin-panel{
+  display:none;position:fixed;
+  top:0;right:0;width:420px;height:100vh;
+  background:#faf7f4;border-left:1px solid #e8e0d8;
+  z-index:101;overflow-y:auto;
+  flex-direction:column;gap:0;
+}
+.admin-panel.on{display:flex}
+.admin-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 24px;border-bottom:1px solid #e8e0d8;
+  background:#fff;position:sticky;top:0;
+}
+.admin-section{padding:20px 24px;border-bottom:1px solid #f0ece6}
+.admin-section-title{
+  font-family:'DM Mono',monospace;font-size:10px;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:#a09888;margin-bottom:12px;
+}
+.admin-btn{
+  font-family:'DM Mono',monospace;font-size:11px;
+  padding:7px 14px;border-radius:6px;
+  border:1px solid #d8d0c8;background:#fff;
+  color:#3a3530;cursor:pointer;transition:all .15s;
+}
+.admin-btn:hover{border-color:#1c1917;color:#1c1917}
+.admin-btn-primary{background:#1c1917;color:#f5f2ee;border-color:#1c1917}
+.admin-btn-primary:hover{background:#2e2a26}
+.admin-data{
+  margin-top:10px;font-family:'DM Mono',monospace;font-size:11px;
+  color:#6a6058;line-height:1.7;
+  background:#f5f2ee;border-radius:6px;padding:10px 12px;
+  display:none;
+}
+.admin-data.on{display:block}
+.stat-row{
+  display:flex;justify-content:space-between;
+  padding:3px 0;border-bottom:1px solid #ece8e4;
+}
+.stat-row:last-child{border-bottom:none}
+.stat-key{color:#a09888}
+.stat-val{color:#1a1a1a;font-weight:500}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-top">
+      <span class="logo-badge">CP-RAG</span>
+      <span class="logo-title">Trustworthy QA</span>
+    </div>
+    <div class="logo-sub">Conformal Prediction · LangGraph · MCP</div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Risk level α</div>
+    <div class="alpha-chips">
+      <button class="chip" onclick="setAlpha(0.05)">0.05</button>
+      <button class="chip active" onclick="setAlpha(0.10)">0.10</button>
+      <button class="chip" onclick="setAlpha(0.20)">0.20</button>
+    </div>
+    <div class="alpha-hint" id="alphaHint">≤ 10% error rate on answered queries</div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="api-label">API endpoint</div>
+    <input class="api-input" type="text" id="apiUrl" value="http://127.0.0.1:6006">
+    <div class="session-row">
+      <span class="session-txt">session: <span id="sessionId">—</span></span>
+      <button class="clear-btn" onclick="clearSession()">clear</button>
+    </div>
+  </div>
+
+  <div class="panel-section" style="border-bottom:1px solid #2e2a26;padding:16px 20px">
+    <div class="section-label">Mode</div>
+    <div style="display:flex;gap:6px">
+      <button class="chip active" id="modeChat" onclick="setMode('chat')">Chat</button>
+      <button class="chip" id="modeWorkflow" onclick="setMode('workflow')">Workflow</button>
+    </div>
+    <div style="font-family:var(--mono);font-size:10px;color:#4b5563;margin-top:6px" id="modeDesc">Multi-turn · LangGraph Agent</div>
+    <div style="font-family:var(--mono);font-size:10px;color:#3a3530;margin-top:8px;line-height:1.7;padding:8px 10px;background:#1a1714;border-radius:6px;border:1px solid #2e2a26" id="modeInfo">支持多轮对话，系统记住上下文，可以追问。走 LangGraph 两阶段检索状态机，CP abstained 时自动扩展检索。</div>
+  </div>
+  <div class="history-label">History</div>
+  <div class="history-list" id="historyList">
+    <div class="empty-hist">No conversation yet.<br>Ask a question below.</div>
+    <div style="padding:16px 20px;border-top:1px solid #2e2a26">
+      <button class="admin-toggle" onclick="toggleAdmin()">⚙ Admin Panel</button>
+    </div>
+  </div>
+
+<div class="admin-overlay" id="adminOverlay" onclick="toggleAdmin()"></div>
+<div class="admin-panel" id="adminPanel">
+  <div class="admin-header">
+    <span style="font-size:14px;font-weight:500">Admin Panel</span>
+    <button onclick="toggleAdmin()" style="background:none;border:none;cursor:pointer;color:#8a8078;font-size:20px;line-height:1">×</button>
+  </div>
+  <div class="admin-section">
+    <div class="admin-section-title">System Stats</div>
+    <button class="admin-btn" onclick="loadStats()">Refresh Stats</button>
+    <div id="statsArea" class="admin-data"></div>
+  </div>
+  <div class="admin-section">
+    <div class="admin-section-title">Recent Records</div>
+    <button class="admin-btn" onclick="loadRecent()">Load Recent (20)</button>
+    <div id="recentArea" class="admin-data"></div>
+  </div>
+  <div class="admin-section">
+    <div class="admin-section-title">Recalibrate q̂</div>
+    <div style="font-size:11px;color:#8a8078;margin-bottom:8px;line-height:1.6">
+      Upload calibration data (JSON array, min 50 items).<br>
+      Format: [{"question":"...","answer":"..."},...]
+    </div>
+    <textarea id="calibInput" placeholder='[{"question":"...","answer":"..."}]'
+      style="width:100%;height:100px;font-family:monospace;font-size:11px;
+             background:#f8f5f0;border:1px solid #d8d0c8;border-radius:8px;
+             padding:8px;resize:vertical;outline:none;box-sizing:border-box"></textarea>
+    <button class="admin-btn admin-btn-primary" onclick="runRecalibrate()" style="margin-top:8px">
+      Run Recalibrate
+    </button>
+    <div id="calibResult" class="admin-data"></div>
+  </div>
+</div>
+</div>
+
+<div class="main">
+  <div class="chat-area" id="chatArea">
+    <div class="welcome" id="welcome">
+      <div class="welcome-title">Ask anything.<br><em>Only answer when confident.</em></div>
+      <div class="welcome-sub">RAG · Self-consistency sampling · Conformal calibration · LangGraph Agent · MCP tools · α-controlled abstention</div>
+    </div>
+  </div>
+
+  <div class="input-wrap">
+    <div class="input-row">
+      <textarea id="queryInput" rows="2" placeholder="Ask a question…"></textarea>
+      <button class="send-btn" id="sendBtn" onclick="ask()">
+        <span id="btnTxt">Send</span>
+        <span class="spinner" id="spinner"></span>
+      </button>
+    </div>
+    <div class="err-msg" id="errMsg"></div>
+    <div class="input-hint">
+      <span>α = <span id="alphaVal">0.10</span> · Multi-turn · LangGraph Agent</span>
+      <span>Cmd+Enter to send</span>
+    </div>
+  </div>
+</div>
+
+<script>
+let alpha = 0.10;
+let sid   = 'sess_' + Date.now();
+let turn  = 0;
+let currentMode = 'chat';
+document.getElementById('sessionId').textContent = sid.slice(-8);
+
+const alphaHints = {
+  0.05: '≤ 5% error rate — strictest abstention',
+  0.10: '≤ 10% error rate on answered queries',
+  0.20: '≤ 20% error rate — most permissive',
+};
+
+function setMode(mode){
+  currentMode=mode;
+  document.getElementById('modeChat').classList.toggle('active',mode==='chat');
+  document.getElementById('modeWorkflow').classList.toggle('active',mode==='workflow');
+  const descs={chat:'Multi-turn · LangGraph Agent',workflow:'Guardian · Router · CP · Logger'};
+  document.getElementById('modeDesc').textContent=descs[mode]||'';
+  const infos={
+    chat:'支持多轮对话，系统记住上下文，可以追问。走 LangGraph 两阶段检索状态机，CP abstained 时自动扩展检索。',
+    workflow:'每次请求独立处理，不保留上下文。Guardian 过滤 prompt 注入，Router 识别模糊问题，CP 控制拒答风险，全链路 Logger 落盘审计。'
+  };
+  const infoEl=document.getElementById('modeInfo');
+  if(infoEl) infoEl.textContent=infos[mode]||'';
+}
+function setAlpha(v) {
+  alpha = v;
+  document.getElementById('alphaVal').textContent = v.toFixed(2);
+  document.getElementById('alphaHint').textContent = alphaHints[v] || '';
+  document.querySelectorAll('.chip').forEach(c =>
+    c.classList.toggle('active', parseFloat(c.textContent) === v)
+  );
+}
+
+async function ask() {
+  const q = document.getElementById('queryInput').value.trim();
+  if (!q) return;
+  const api = document.getElementById('apiUrl').value.trim().replace(/\/$/,'');
+  const btn = document.getElementById('sendBtn');
+  const err = document.getElementById('errMsg');
+  btn.disabled = true;
+  document.getElementById('btnTxt').style.display = 'none';
+  document.getElementById('spinner').classList.add('on');
+  err.classList.remove('on');
+  document.getElementById('queryInput').value = '';
+  const w = document.getElementById('welcome');
+  if (w) { w.style.display = 'none'; }
+  try {
+    const res = await fetch(`${api}${currentMode==='workflow'?'/workflow':'/chat'}`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({query: q, alpha, session_id: sid}),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const d = await res.json();
+    renderTurn(q, d);
+    updateHistory(d.history);
+  } catch(e) {
+    err.textContent = `Error: ${e.message}`;
+    err.classList.add('on');
+  } finally {
+    btn.disabled = false;
+    document.getElementById('btnTxt').style.display = '';
+    document.getElementById('spinner').classList.remove('on');
+  }
+}
+
+function renderTurn(q, d) {
+  turn++;
+  const area = document.getElementById('chatArea');
+  const ok   = d.status === 'reliable';
+  const ext  = d.web_searched;
+
+  const barClass  = ok ? (ext ? 'extended' : 'reliable') : 'abstained';
+  const barLabel  = ok ? (ext ? '↺ Answered via extended retrieval' : '✓ Reliable — answered') : (d.status==='clarify' ? '⚠ Clarify — question too vague' : d.status==='safe_refuse' ? '✗ Blocked — unsafe input' : '✗ Abstained — uncertain');
+  const sourceClass = d.source === 'kb' ? 'source-kb' : (d.source === 'extended_kb' ? 'source-ext' : 'source-none');
+  const sourceTxt   = d.source === 'kb' ? 'Knowledge base' : (d.source === 'extended_kb' ? 'Extended retrieval' : 'No source');
+
+  const node = document.createElement('div');
+  node.className = 'turn';
+  node.id = `turn-${turn}`;
+  node.innerHTML = `
+    <div class="turn-meta">Turn ${turn} · ${new Date().toLocaleTimeString()}</div>
+    <div class="q-bubble">${esc(q)}</div>
+
+    ${ext && d.search_queries && d.search_queries.length ? `
+    <div class="search-note">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="5" cy="5" r="4" stroke="#c09020" stroke-width="1.5"/><line x1="8.5" y1="8.5" x2="11" y2="11" stroke="#c09020" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Extended retrieval triggered · query: "${esc(d.search_queries[d.search_queries.length-1])}"
+    </div>` : ''}
+
+    <div class="answer-block">
+      <div class="answer-status-bar ${barClass}">
+        <div class="status-dot"></div>
+        <span class="status-label">${barLabel}</span>
+        <span class="status-detail">score ${d.score.toFixed(4)} ${ok?'≤':'>'} q̂ ${d.threshold.toFixed(4)} · α=${d.alpha}</span>
+        <span class="latency">${d.latency_ms.toFixed(0)}ms</span>
+      </div>
+
+      <div class="answer-text-wrap">
+        ${ok
+          ? `<div class="answer-text">${esc(d.answer)}</div>
+             <div style="display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap">
+               <div class="source-badge ${sourceClass}">${sourceTxt}</div>
+               ${d.faithfulness ? faithBadge(d.faithfulness) : ''}
+             </div>`
+          : d.status==='clarify'
+            ? `<div class="answer-text abstained-msg" style="color:#9a7010">Your question is too vague. Please provide more details.</div>`
+            : d.status==='safe_refuse'
+            ? `<div class="answer-text abstained-msg" style="color:#c04020">Request blocked: potential prompt injection detected.</div>`
+            : `<div class="answer-text abstained-msg">System abstained — confidence too low for α=${d.alpha}.<br>Try a higher α or rephrase your question.</div>`
+        }
+      </div>
+
+      <div class="metrics-row">
+        <div class="metric">
+          <div class="metric-name">Confidence</div>
+          <div class="metric-val" style="color:#3a7a1a">${d.confidence.toFixed(4)}</div>
+          <div class="metric-bar"><div class="metric-fill" style="background:#5a9a2a;width:0%" data-w="${(d.confidence*100).toFixed(1)}"></div></div>
+        </div>
+        <div class="metric">
+          <div class="metric-name">Nonconf. score</div>
+          <div class="metric-val" style="color:#9a7010">${d.score.toFixed(4)}</div>
+          <div class="metric-bar"><div class="metric-fill" style="background:#c09020;width:0%" data-w="${(d.score*100).toFixed(1)}"></div></div>
+        </div>
+        <div class="metric">
+          <div class="metric-name">Threshold q̂</div>
+          <div class="metric-val" style="color:#1a5a9a">${d.threshold.toFixed(4)}</div>
+          <div class="metric-bar"><div class="metric-fill" style="background:#3a7ab8;width:0%" data-w="${(d.threshold*100).toFixed(1)}"></div></div>
+        </div>
+      </div>
+
+      <div class="score-viz">
+        <div class="score-viz-track">
+          <div class="score-fill" style="width:0%" data-w="${(d.score*100).toFixed(1)}"></div>
+          <div class="thresh-line" style="left:0%" data-l="${(d.threshold*100).toFixed(1)}"></div>
+        </div>
+        <div class="score-viz-label">
+          <span>0.0 — score vs threshold</span><span>1.0</span>
+        </div>
+      </div>
+
+      <div class="bd-section">
+        <button class="bd-toggle" onclick="toggleBD(this)">
+          <span class="bd-arrow">▶</span> Component breakdown
+        </button>
+        <div class="bd-panel">
+          <div class="bd-row"><span>Nonconformity score</span><span class="bd-val">${d.score.toFixed(4)}</span></div>
+          <div class="bd-row"><span>Confidence (1 − score)</span><span class="bd-val">${d.confidence.toFixed(4)}</span></div>
+          <div class="bd-row"><span>Threshold q̂ (α=${d.alpha})</span><span class="bd-val">${d.threshold.toFixed(4)}</span></div>
+          <div class="bd-row"><span>Decision</span><span class="bd-val" style="color:${ok?'#3a7a1a':'#c04020'}">${d.status}</span></div>
+          <div class="bd-row"><span>Source</span><span class="bd-val">${d.source || 'none'}</span></div>
+          ${ext ? `<div class="bd-row"><span>Extended retrieval</span><span class="bd-val" style="color:#8a5a10">triggered</span></div>` : ''}
+        </div>
+      </div>
+    </div>
+
+    ${d.docs && d.docs.length ? `
+    <div class="docs-block">
+      <div class="docs-header">Retrieved documents (${d.docs.length})</div>
+      ${d.docs.map((doc,i)=>`
+        <div class="doc-item">
+          <span class="doc-num">[${i+1}]</span>
+          <span>${esc(doc)}</span>
+        </div>`).join('')}
+    </div>` : ''}
+  `;
+  area.appendChild(node);
+
+  requestAnimationFrame(() => {
+    node.querySelectorAll('[data-w]').forEach(el => el.style.width = el.dataset.w + '%');
+    node.querySelectorAll('[data-l]').forEach(el => el.style.left = el.dataset.l + '%');
+  });
+  node.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function updateHistory(h) {
+  if (!h || !h.length) return;
+  const list = document.getElementById('historyList');
+  list.innerHTML = [...h].reverse().map((t, i) => {
+    const sc = t.status === 'reliable' ? 'hist-reliable' : 'hist-abstained';
+    const src = t.rewritten
+      ? '<span class="hist-source-ext">↺ ext</span>'
+      : '<span class="hist-source-kb">kb</span>';
+    return `
+      <div class="hist-item ${i===0?'active':''}" onclick="scrollToTurn(${h.length-i})">
+        <div class="hist-q">${esc(t.question)}</div>
+        <div class="hist-meta">
+          <span class="${sc}">${t.status}</span>
+          <span class="hist-conf">${t.confidence.toFixed(3)}</span>
+          ${src}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function scrollToTurn(n) {
+  const el = document.getElementById(`turn-${n}`);
+  if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function toggleBD(btn) {
+  btn.classList.toggle('open');
+  btn.nextElementSibling.classList.toggle('open');
+}
+
+async function clearSession() {
+  const api = document.getElementById('apiUrl').value.trim().replace(/\/$/,'');
+  try { await fetch(`${api}/chat/${sid}`, {method:'DELETE'}); } catch {}
+  sid = 'sess_' + Date.now();
+  turn = 0;
+  document.getElementById('sessionId').textContent = sid.slice(-8);
+  document.getElementById('historyList').innerHTML = '<div class="empty-hist">No conversation yet.<br>Ask a question below.</div>';
+  document.getElementById('chatArea').innerHTML = `
+    <div class="welcome" id="welcome">
+      <div class="welcome-title">Ask anything.<br><em>Only answer when confident.</em></div>
+      <div class="welcome-sub">RAG · Self-consistency sampling · Conformal calibration · LangGraph Agent · MCP tools · α-controlled abstention</div>
+    </div>`;
+}
+
+function faithBadge(f) {
+  if (!f || !f.label) return '';
+  const colors = {
+    faithful:    {bg:'#eaf3de', color:'#27500a', border:'#97c459'},
+    uncertain:   {bg:'#faeeda', color:'#633806', border:'#ef9f27'},
+    hallucinated:{bg:'#fcebeb', color:'#791f1f', border:'#f09595'},
+  };
+  const c = colors[f.label] || colors.uncertain;
+  const icons = {faithful:'✓', uncertain:'?', hallucinated:'!'};
+  const score = f.faithfulness_score ?? f.score ?? null;
+  const pct = score !== null ? ` · ${(score*100).toFixed(0)}%` : '';
+  return `<span style="display:inline-flex;align-items:center;gap:4px;font-family:'DM Mono',monospace;font-size:10px;padding:3px 10px;border-radius:20px;background:${c.bg};color:${c.color};border:1px solid ${c.border}">
+    ${icons[f.label]||'?'} ${f.label}${pct}
+  </span>`;
+}
+
+function toggleAdmin() {
+  document.getElementById('adminPanel').classList.toggle('on');
+  document.getElementById('adminOverlay').classList.toggle('on');
+}
+
+async function loadStats() {
+  const api = document.getElementById('apiUrl').value.trim().replace(/\/$/,'');
+  const area = document.getElementById('statsArea');
+  try {
+    const res = await fetch(`${api}/history/stats`);
+    const d = await res.json();
+    const f = d.faithfulness || {};
+    // 尝试获取 trace stats（workflow 模式的路由分布）
+    let traceStats = null;
+    try {
+      const tr = await fetch(`${api}/history/trace_stats`);
+      if (tr.ok) traceStats = await tr.json();
+    } catch {}
+
+    const rd = traceStats ? traceStats.route_distribution || {} : {};
+    const routeHtml = Object.entries(rd).map(([k,v]) =>
+      `<div class="stat-row"><span class="stat-key">route: ${k}</span><span class="stat-val">${v.count} (${(v.rate*100).toFixed(1)}%)</span></div>`
+    ).join('');
+
+    area.innerHTML = `
+      <div class="stat-row"><span class="stat-key">Total queries</span><span class="stat-val">${d.total}</span></div>
+      <div class="stat-row"><span class="stat-key">Answered</span><span class="stat-val">${d.answered}</span></div>
+      <div class="stat-row"><span class="stat-key">Abstained</span><span class="stat-val">${d.abstained}</span></div>
+      <div class="stat-row"><span class="stat-key">Abstention rate</span><span class="stat-val">${(d.abstention_rate*100).toFixed(1)}%</span></div>
+      <div class="stat-row"><span class="stat-key">Avg confidence</span><span class="stat-val">${d.avg_confidence}</span></div>
+      <div class="stat-row"><span class="stat-key">Faithful</span><span class="stat-val" style="color:#3a7a1a">${f.faithful||0} (${((f.faithful_rate||0)*100).toFixed(1)}%)</span></div>
+      <div class="stat-row"><span class="stat-key">Hallucinated</span><span class="stat-val" style="color:#c04020">${f.hallucinated||0} (${((f.hallucinated_rate||0)*100).toFixed(1)}%)</span></div>
+      <div class="stat-row"><span class="stat-key">Avg faith score</span><span class="stat-val">${f.avg_score||0}</span></div>
+      ${traceStats ? `
+      <div style="margin-top:8px;font-family:var(--mono);font-size:9px;color:#a09888;letter-spacing:.08em;text-transform:uppercase">Workflow Route Distribution</div>
+      ${routeHtml}
+      <div class="stat-row"><span class="stat-key">Guardian block rate</span><span class="stat-val" style="color:#c04020">${((traceStats.guardian_block_rate||0)*100).toFixed(1)}%</span></div>
+      <div class="stat-row"><span class="stat-key">Avg latency</span><span class="stat-val">${(traceStats.latency||{}).avg_ms||0} ms</span></div>
+      <div class="stat-row"><span class="stat-key">P95 latency</span><span class="stat-val">${(traceStats.latency||{}).p95_ms||0} ms</span></div>
+      ` : ''}
+    `;
+    area.classList.add('on');
+  } catch(e) { area.textContent=`Error: ${e.message}`; area.classList.add('on'); }
+}
+
+async function loadRecent() {
+  const api = document.getElementById('apiUrl').value.trim().replace(/\/$/,'');
+  const area = document.getElementById('recentArea');
+  try {
+    const res = await fetch(`${api}/history/recent?limit=20`);
+    const records = await res.json();
+    area.innerHTML = records.map(r => `
+      <div style="padding:6px 0;border-bottom:1px solid #ece8e4">
+        <div style="color:#3a3530;margin-bottom:2px">${esc(r.question.slice(0,60))}${r.question.length>60?'…':''}</div>
+        <div style="display:flex;gap:10px;font-size:10px">
+          <span style="color:${r.status==='reliable'?'#3a7a1a':'#c04020'}">${r.status}</span>
+          <span style="color:#a09888">conf ${(r.confidence||0).toFixed(3)}</span>
+          ${r.faithfulness_label?`<span style="color:${r.faithfulness_label==='faithful'?'#3a7a1a':r.faithfulness_label==='hallucinated'?'#c04020':'#9a7010'}">${r.faithfulness_label}</span>`:''}
+        </div>
+      </div>`).join('');
+    area.classList.add('on');
+  } catch(e) { area.textContent=`Error: ${e.message}`; area.classList.add('on'); }
+}
+
+async function runRecalibrate() {
+  const api  = document.getElementById('apiUrl').value.trim().replace(/\/$/,'');
+  const area = document.getElementById('calibResult');
+  const raw  = document.getElementById('calibInput').value.trim();
+  if (!raw) { alert('请输入校准数据'); return; }
+  let data;
+  try { data = JSON.parse(raw); } catch(e) { alert('JSON 格式错误: '+e.message); return; }
+  area.textContent = '校准中，请稍候…';
+  area.classList.add('on');
+  try {
+    const res = await fetch(`${api}/recalibrate`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({data, alphas:[0.05,0.1,0.2]}),
+    });
+    const d = await res.json();
+    if (!res.ok) { area.textContent=`Error: ${d.detail}`; return; }
+    area.innerHTML = `
+      <div class="stat-row"><span class="stat-key">Status</span><span class="stat-val" style="color:#3a7a1a">✓ Updated</span></div>
+      <div class="stat-row"><span class="stat-key">Data used</span><span class="stat-val">${d.n_used} (failed: ${d.n_failed})</span></div>
+      <div class="stat-row"><span class="stat-key">Old q̂ (α=0.1)</span><span class="stat-val">${d.old_qhat['0.1']}</span></div>
+      <div class="stat-row"><span class="stat-key">New q̂ (α=0.1)</span><span class="stat-val" style="color:#3a7a1a">${d.new_qhat['0.1']}</span></div>
+      <div class="stat-row"><span class="stat-key">Message</span><span class="stat-val">${d.message}</span></div>
+    `;
+  } catch(e) { area.textContent=`Error: ${e.message}`; }
+}
+
+function esc(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+document.getElementById('queryInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) ask();
+});
+</script>
+</body>
+</html>

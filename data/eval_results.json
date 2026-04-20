@@ -1,0 +1,60 @@
+{
+  "n_cal": 500,
+  "n_test": 200,
+  "cal_score_stats": {
+    "min": 0.0895,
+    "mean": 0.3023,
+    "max": 0.5266
+  },
+  "test_score_stats": {
+    "min": 0.0725,
+    "mean": 0.2891,
+    "max": 0.5155
+  },
+  "results_by_alpha": {
+    "0.05": {
+      "alpha": 0.05,
+      "threshold_qhat": 0.4578,
+      "n_total": 200,
+      "n_answered": 50,
+      "n_abstained": 150,
+      "n_correct": 39,
+      "n_wrong": 11,
+      "miscoverage_rate": 0.22,
+      "cp_guarantee_holds": false,
+      "abstention_rate": 0.75,
+      "accuracy_on_answered": 0.78
+    },
+    "0.1": {
+      "alpha": 0.1,
+      "threshold_qhat": 0.4265,
+      "n_total": 200,
+      "n_answered": 50,
+      "n_abstained": 150,
+      "n_correct": 39,
+      "n_wrong": 11,
+      "miscoverage_rate": 0.22,
+      "cp_guarantee_holds": false,
+      "abstention_rate": 0.75,
+      "accuracy_on_answered": 0.78
+    },
+    "0.2": {
+      "alpha": 0.2,
+      "threshold_qhat": 0.3426,
+      "n_total": 200,
+      "n_answered": 50,
+      "n_abstained": 150,
+      "n_correct": 39,
+      "n_wrong": 11,
+      "miscoverage_rate": 0.22,
+      "cp_guarantee_holds": false,
+      "abstention_rate": 0.75,
+      "accuracy_on_answered": 0.78
+    }
+  },
+  "baseline": {
+    "total": 200,
+    "correct": 39,
+    "accuracy": 0.195
+  }
+}
